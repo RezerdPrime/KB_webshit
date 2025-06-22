@@ -1,0 +1,43 @@
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./open-appsec-policy.json:/etc/nginx/open-appsec-policy.json  # Объединено в один блок volumes
+    depends_on:
+      - php
+      - db
+    networks:
+      - app_network
+
+  php:
+    build: ./php
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - app_network
+
+  db:
+    image: mariadb:latest
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_network
+    environment:
+      - MYSQL_ROOT_PASSWORD=admin
+      - MYSQL_DATABASE=mysql
+    command: --skip-name-resolve --innodb-use-native-aio=0
+    restart: unless-stopped
+
+volumes:
+  db_data:
+
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.0.0/16
